@@ -13,6 +13,8 @@ if not os.path.exists(path):
     op=input()
     if(op=='Y'):
         os.makedirs(path)
+    else:
+        exit(0)
 playlistid=''
 p=len(l)-1
 while(p>=0 and l[p].isdigit()):
@@ -37,9 +39,17 @@ for j in songid:
     detailobj=urllib.request.urlopen(detaillk)
     details=json.loads(detailobj.read())
     songname=details['songs'][0]['name']
-    authorname=details['songs'][0]['ar'][0]['name']
+    authornames=[]
+    authorname=''
+    for k in details['songs'][0]['ar']:
+        authornames.append(k['name'])
+    authorname=''
+    for k in range(0,len(authornames)):
+        authorname+=authornames[k]
+        if k<len(authornames)-1:
+            authorname+=','
     try:
-        urllib.request.urlretrieve(downlink,'D:/music/'+authorname+'-'+songname+'.mp3')
+        urllib.request.urlretrieve(downlink,path+authorname+'-'+songname+'.mp3')
         print('Download Success for Song %s'%(authorname+'-'+songname))
         downloadnum+=1
     except:
