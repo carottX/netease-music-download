@@ -7,17 +7,20 @@ import re
 class downloader():
 
     path='D:/music/'
+    searchmin=10
     
-    def __init__(self,path):
-        if not os.path.exists(path):
+    def __init__(self,p,mins):
+        self.path=p
+        self.searchmin=mins
+        if not os.path.exists(p):
             print('The dictinary doesn\' exist. Create one? Y/N')
             op=input()
             if(op=='Y'):
-                os.makedirs(path)
+                os.makedirs(p)
             else:
                 exit(0)
 
-    def songdownload(self,songid):
+    def song(self,songid):
         lk='https://api.imjad.cn/cloudmusic/?type=song&id='+songid+'&br=128000'
         song=urllib.request.urlopen(lk)
         songdata=json.loads(song.read())
@@ -43,7 +46,7 @@ class downloader():
             print('Download Failed for Song %s'%(authorname+'-'+songname))
             return 0
 
-    def playlistdownload(self,playlistid):
+    def playlist(self,playlistid):
         url='https://api.imjad.cn/cloudmusic/?type=playlist&id='+playlistid
         playlist=urllib.request.urlopen(url)
         d=playlist.read()
@@ -55,7 +58,7 @@ class downloader():
         print('Now trying to download!')
         downloadnum=0
         for j in songid:
-            downloadnum+=songdownload(str(j),path)
+            downloadnum+=self.song(str(j))
         print('Download Complete! %d/%d Success in total!'%(downloadnum,len(songid)))
 
     def getplaylistid(self,playlisturl):
@@ -73,60 +76,150 @@ class downloader():
         return songid
 
     def isvalidlink(self,url):
-        if re.match('https://music.163.com/#/song?id=\d+',url) or re.match('https://music.163.com/#/playlist?id=\d+',url):
-            return True
+        songurl='https://music.163.com/#/song?id='
+        playlisturl='https://music.163.com/#/playlist?id='
+        if url[0:len(songurl)]==songurl and url[len(songurl):].isdigit():
+            return 'song'
+        elif url[0:len(playlisturl)]==playlisturl and url[len(playlisturl):].isdigit():
+            return 'playlist'
         else:
-            return False
+            return None
 
+    def search(self,songname):
+        searchurl='https://api.imjad.cn/cloudmusic/?type=search&search_type=1&s='+songname
+        searchdata=urllib.request.urlopen(searchurl)
+        d=searchdata.read()
+        res=json.loads(d)
+        p=0
+        while(p<len(res['result']['songs'])):
+            for i in range(0,min(len(res['result']['songs'])-p,self.searchmin)):
+                result=res['result']['songs'][i+p]
+                songname=result['name']
+                authornames=[]
+                authorname=''
+                for k in result['ar']:
+                    authornames.append(k['name'])
+                authorname=''
+                for k in range(0,len(authornames)):
+                    authorname+=authornames[k]
+                    if k<len(authornames)-1:
+                        authorname+=','
+                print('%d:%s-%s link:%s'%(i+1,authorname,songname,'https://music.163.com/#/song?id='+str(result['id'])))
+            p+=self.searchmin
+            print('%d:Next Page'%(min(len(res['result']['songs'])-p,self.searchmin)+1))
+            print('%d:Exit'%(min(len(res['result']['songs'])-p,self.searchmin)+2))
+            print('Input your choice')
+            c=input()
+            cn=0
+            while(True):
+                try:
+                    cn=int(c)
+                    if(0<cn<=min(len(res['result']['songs'])-p,self.searchmin)+2):
+                        break
+                    else:
+                        print('Wrong Input!Try Again')
+                        c=input()
+                except:
+                    print('Wrong Input!Try Again')
+                    c=input()
+            if(0<cn<=min(len(res['result']['songs'])-p,self.searchmin)):
+                print('Choosed.Trying to download...')
+                self.song(str(res['result']['songs'][cn-1+p]['id']))
+                print('Finished')
+                break
+            elif cn==min(len(res['result']['songs'])-p,self.searchmin)+1:
+                   continue
+            else:
+                   break
 
 conf=1
 s=''
+ms=''
+mms=0
 if not os.path.exists('download.conf'):
     print('Find that config file is missing.')
     conf=0
     print('Please input your download path. For example, E:/Audio/Music/')
     s=input()
+    print('Please input your minimum result per page for the search For example:10')
+    ms=input()
+    try:
+        mms=int(ms)
+    except:
+        print('Invalid input!')
+        exit(0)
     print('Change the default to it? Y/N')
     c=input()
     if c=='Y':
         f=open('download.conf','w')
         f.write('path='+s)
+        f.write('\n')
+        f.write('searchmin='+ms)
         f.close()
 else:
     print('Use the default setting? Y/N')
     c=input()
     if c=='Y':
         f=open('download.conf','r')
-        try:
-            setting=f.readline()
-        except:
-            f.close()
-            print('The conf is broken! Please Check')
-            exit(0)
-        p=setting.find('=')
-        if p==-1:
-            f.close()
-            print('The conf is broken! Please Check')
-            exit(0)
-        else:
-            s=setting[p+1:]
+        for i in range(0,2):
+            try:
+                setting=f.readline()
+            except:
+                f.close()
+                print('The conf is broken! Please Check')
+                exit(0)
+            p=setting.find('=')
+            if p==-1:
+                f.close()
+                print('The conf is broken! Please Check')
+                exit(0)
+            else:
+                if i==0:
+                    s=setting[p+1:]
+                    s=s[:len(s)-2]
+                elif i==1:
+                    ms=setting[p+1:]
+                    try:
+                        mms=int(ms)
+                    except:
+                        print('The conf is broken! Please Check')
+                        f.close()
+                        exit(0)
         f.close()
     else:
         print('Please input your download path. For example, E:/Audio/Music/')
         s=input()
+        print('Please input your minimum result per page for the search For example:10')
+        ms=input()
+        try:
+            mms=int(ms)
+        except:
+            print('Invalid input!')
+            exit(0)
         print('Change the default to it? Y/N')
         c=input()
         if c=='Y':
             f=open('download.conf','w')
             f.write('path='+s)
+            f.write('\n')
+            f.write('searchmin='+ms)
+            f.close()
 
-download=downloader(s)
-print('What do you wanna download?1=Playlist,2=Single Song')
+print(s,mms)
+
+download=downloader(s,mms)
+print('Search&Download songs=1 Download song/playlist=2')
 c=input()
-if c=='1':
-    print('Please input your play list link')
-    download.playlistdownload(download.getplaylistid(input()))
-
-elif c=='2':
-    print('Please input your song list link')
-    download.songdownload(download.getsongid(input()))
+if c=='2':
+    print('Please input your playlist/song link')
+    link=input()
+    if download.isvalidlink(link)=='song':
+        download.song(download.getsongid(link))
+    elif download.isvalidlink(link)=='playlist':
+        download.playlist(download.getplaylistid(link))
+    else:
+        print('Wrong link!Please check!')
+        exit(0)
+elif c=='1':
+    print('Please input the search content')
+    download.search(input())
