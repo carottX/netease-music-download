@@ -40,6 +40,9 @@ class downloader():
                 authorname+=','
         name=authorname+'-'+songname+'.mp3'
         name=name.replace('/','／')
+        if os.path.isfile(self.path+name):
+            print('Already Exists Song %s. Skipped'%(name))
+            return 1
         try:
             urllib.request.urlretrieve(downlink,self.path+name)
             print('Download Success for Song %s'%(name))
@@ -208,7 +211,7 @@ else:
             f.write('searchmin='+ms)
             f.close()
 
-print(s,mms)
+#print(s,mms)
 
 download=downloader(s,mms)
 print('Search&Download songs=1 Download song/playlist=2')
