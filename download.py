@@ -38,12 +38,14 @@ class downloader():
             authorname+=authornames[k]
             if k<len(authornames)-1:
                 authorname+=','
+        name=authorname+'-'+songname+'.mp3'
+        name=name.replace('/','／')
         try:
-            urllib.request.urlretrieve(downlink,self.path+authorname+'-'+songname+'.mp3')
-            print('Download Success for Song %s'%(authorname+'-'+songname))
+            urllib.request.urlretrieve(downlink,self.path+name)
+            print('Download Success for Song %s'%(name))
             return 1
         except:
-            print('Download Failed for Song %s'%(authorname+'-'+songname))
+            print('Download Failed for Song %s'%(name))
             return 0
 
     def playlist(self,playlistid):
@@ -176,7 +178,8 @@ else:
             else:
                 if i==0:
                     s=setting[p+1:]
-                    s=s[:len(s)-2]
+                    s=s.strip('\n')
+                    s=s.strip(' ')
                 elif i==1:
                     ms=setting[p+1:]
                     try:
