@@ -10,6 +10,18 @@ def getsongid(songurl):
     songid=songurl[p+1:]
     return songid
 
+def delinvalid(s):
+    s=s.replace('/','／')
+    s=s.replace('\\','＼')
+    s=s.replace(':','：')
+    s=s.replace('*','＊')
+    s=s.replace('?','？')
+    s=s.replace('"','＂')
+    s=s.replace('<','＜')
+    s=s.replace('>','＞')
+    s=s.replace('|','｜')
+    return s
+
 def song(songid):
     global w3
     lk='https://api.imjad.cn/cloudmusic/?type=song&id='+songid+'&br=128000'
@@ -30,7 +42,8 @@ def song(songid):
         if k<len(authornames)-1:
             authorname+=','
     name=authorname+'-'+songname+'.mp3'
-    name=name.replace('/','／')
+    name=delinvalid(name)
+    print(download_path+name)
     if os.path.isfile(download_path+name):
         w3['text']='Already Exists Song %s. Skipped'%(name)
         return 1
