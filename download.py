@@ -9,6 +9,18 @@ class downloader():
     path='D:/music/'
     searchmin=10
     
+    def delinvalid(self,s):
+        s=s.replace('/','／')
+        s=s.replace('\\','＼')
+        s=s.replace(':','：')
+        s=s.replace('*','＊')
+        s=s.replace('?','？')
+        s=s.replace('"','＂')
+        s=s.replace('<','＜')
+        s=s.replace('>','＞')
+        s=s.replace('|','｜')
+        return s
+    
     def __init__(self,p,mins):
         self.path=p
         self.searchmin=mins
@@ -39,7 +51,7 @@ class downloader():
             if k<len(authornames)-1:
                 authorname+=','
         name=authorname+'-'+songname+'.mp3'
-        name=name.replace('/','／')
+        name=delinvalid(name)
         if os.path.isfile(self.path+name):
             print('Already Exists Song %s. Skipped'%(name))
             return 1
